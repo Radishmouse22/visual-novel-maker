@@ -231,6 +231,12 @@ public static class Interpreter
         // [character shorthand] <speach*>
         if (n.characters.TryGetValue(words[0], out Character c))
         {
+            // all commands must be in a scene
+            if (currentScene == null)
+            {
+                RaiseError("command must be in a scene");
+                return;
+            }
             if (words.Count == 1)
             {
                 currentScene.Add(new Speak(c.name, ""));
