@@ -3,6 +3,9 @@ A tool for creating and playing visual novel games.
 Currently developed in the Unity game engine with plans to move to a standalone application.
 This readme will become more in-depth and useful as development continues.
 
+# Notes
+Assumes that all folders in the root `StreamingAssets` folder are project folders.
+
 # LANGUAGE
 Commands make things happen in the visual novel. A command makes up a line of code. Only one command is allowed per line.
 
@@ -19,7 +22,7 @@ scene start
 and to indent under an `if` statment, like so:
 ```
 scene tutorial
-    if playedBefore:
+    if playedBefore
         jump beginning
 ```
 
@@ -29,7 +32,7 @@ Since most command arguments are one word long (An asterisk `*` indicates otherw
 ### Special Characters
 Only these standard English characters are conventional: `A-Z` `a-z` `,.:;'"/()!@#$%^&*-=_+~`
 Obscure UTF-8 characters, emojis, unusual Unicode characters, or any other characters might result in undefined behaviour.
-Line both Windows (`CRLF`) and UNIX (`LF`) line endings are allowed.
+Both Windows (`CRLF`) and UNIX (`LF`) line endings are allowed.
 
 # COMMANDS
 Non-declarations must be defined under a scene.

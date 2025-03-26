@@ -13,19 +13,28 @@ public static class Interpreter
     static InterpretMode mode;
     static List<ICommand> currentScene;
     static bool loadImages = true;
+    static ProjectSettings projectSettings;
+    static bool containsProjectSettings;
 
     static string e;
     static ICommand lastShowOrHideCommand;
 
     public const string START_SCENE_NAME = "start";
 
-    public static void InterpretProject(DirectoryInfo dir, Novel n, List<string> errors, bool loadImages)
+    /// <summary>
+    /// Big daddy function that returns a horrificly awful stupid bad object tree of commands
+    /// </summary>
+    /// <returns>Whether the project contains a project settings file</returns>
+    public static bool InterpretProject(DirectoryInfo dir, Novel n, List<string> errors, bool loadImages, out ProjectSettings projectSettings)
     {
         Interpreter.errors = errors;
         Interpreter.n = n;
         Interpreter.sceneFiles = new();
         Interpreter.currentScene = null;
         Interpreter.loadImages = loadImages;
+        Interpreter.projectSettings = null;
+        Interpreter.projectSettings = null;
+        Interpreter.containsProjectSettings = false;
 
         // import images and shelve scene files
         ImportImages(dir);
@@ -44,24 +53,42 @@ public static class Interpreter
         if (!n.scenes.ContainsKey(START_SCENE_NAME))
             errors.Add($"project needs to contain a scene named \"{START_SCENE_NAME}\" to start at");
 
-        // set these back to null just in case
+        // set these back to null to free memory
         Interpreter.errors = null;
         Interpreter.n = null;
         Interpreter.sceneFiles = null;
         Interpreter.currentScene = null;
         Interpreter.loadImages = true;
-    }
+        // Interpreter.containsProjectSettings = false;
 
+        projectSettings = Interpreter.projectSettings;
+        return containsProjectSettings;
+    }
+    
     static void ImportImages(DirectoryInfo dir)
     {
         // check every file in this directory
         foreach (var file in dir.GetFiles())
         {
             // if it's a scene file, add it to the list to interpret later
-            if (file.Extension == "" && file.Name != Singleton.PROJECT_SETTINGS_FILE_NAME)
+            if (file.Extension == "")
+            {
+                if (file.Name == Constants.SETTINGS_FILE_NAME)
+                {
+                    if (containsProjectSettings)
+                    {
+                        RaiseError($"Project contains multiple project settings ({Constants.SETTINGS_FILE_NAME}) files");
+                        continue;
+                    }
+                    ReadProjectSettings(file);
+                    containsProjectSettings = true;
+                    continue;
+                }
                 sceneFiles.Add(file.FullName);
+                continue;
+            }
             // if it's an image, let's do it now
-            else if (ValidImageFile(file.Extension))
+            if (ValidImageFile(file.Extension))
                 ImportImage(file);
         }
 
@@ -69,7 +96,6 @@ public static class Interpreter
         foreach (var subDir in dir.GetDirectories())
             ImportImages(subDir);
     }
-
     static void ImportImage(FileInfo file)
     {
         string fullname = Path.GetFileNameWithoutExtension(file.Name).ToLower();
@@ -145,7 +171,6 @@ public static class Interpreter
             }
         }
     }
-
     static void InterpretLineForDeclarations(List<string> words)
     {
         foreach (CommandTemplate dec in declarationTemplates)
@@ -161,7 +186,6 @@ public static class Interpreter
         // because of speak statements
         // RaiseError("unknown keyword");
     }
-
     static void InterpretLineForCommands(List<string> words)
     {
         // not a command, but we still need to switch scenes in the command-interpreting step
@@ -510,6 +534,16 @@ public static class Interpreter
             return null;
         }),
     };
+
+    static void ReadProjectSettings(FileInfo file)
+    {
+        projectSettings = JsonUtility.FromJson<ProjectSettings>(File.ReadAllText(file.FullName));
+        if (projectSettings == null)
+        {
+            RaiseError("Error with project settings file - consider deleting");
+            return;
+        }
+    }
 
     static bool ValidImageFile(string ext) => ext == ".png" || ext == ".jpg";
     // static void RaiseError(string err) => errors.Add(e+err);

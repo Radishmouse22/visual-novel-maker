@@ -6,8 +6,8 @@ using UnityEngine.UI;
 
 public class VisualNovelPlayer : MonoBehaviour
 {
+    public GameObject playerParent;
     public Image background;
-    public PlayerUIManager uiManager;
 
     [Header("Components")]
     public DialogueBox box;
@@ -15,37 +15,43 @@ public class VisualNovelPlayer : MonoBehaviour
     public Prompter prompter;
 
     // live variables
-    int index = 0;
-    public static Novel n;
-    List<ICommand> sceneEvents;
-    bool skip;
+    int commandIndex = 0;
+    List<ICommand> commands;
+    bool skipNextCommand;
     Dictionary<string, string> selections; // choice, chosen scene
+    public static Novel n => NovelTesting.novel;
 
-    public void Play(Novel novel)
+    void Awake()
     {
+        playerParent.SetActive(false);
+    }
+
+    // called from play button
+    public void Play()
+    {
+        playerParent.SetActive(true);
         imageManager.DestroyAll();
         prompter.DestroyAll();
-        index = 0;
-        n = novel;
-        sceneEvents = n.scenes[Interpreter.START_SCENE_NAME];
-        skip = false;
+        commandIndex = 0;
+        commands = n.scenes[Interpreter.START_SCENE_NAME];
+        skipNextCommand = false;
         selections = new();
         NextEvent();
     }
 
     void NextEvent()
     {
-        if (index >= sceneEvents.Count)
+        if (commandIndex >= commands.Count)
         {
             Done();
             return;
         }
 
-        ICommand e = sceneEvents[index++];
+        ICommand e = commands[commandIndex++];
 
-        if (skip)
+        if (skipNextCommand)
         {
-            skip = false;
+            skipNextCommand = false;
             NextEvent();
             return;
         }
@@ -74,12 +80,12 @@ public class VisualNovelPlayer : MonoBehaviour
     }
     void If(If e)
     {
-        skip = !n.variables[e.var];
+        skipNextCommand = !n.variables[e.var];
         NextEvent();
     }
     void IfNot(IfNot e)
     {
-        skip = n.variables[e.var];
+        skipNextCommand = n.variables[e.var];
         NextEvent();
     }
     void Prompt(Prompt e)
@@ -118,8 +124,8 @@ public class VisualNovelPlayer : MonoBehaviour
     }
     void _Jump(string to)
     {
-        sceneEvents = n.scenes[to];
-        index = 0;
+        commands = n.scenes[to];
+        commandIndex = 0;
     }
     void Wait(Wait e) => StartCoroutine(WaitCoroutine(e));
     IEnumerator WaitCoroutine(Wait e)
@@ -154,6 +160,10 @@ public class VisualNovelPlayer : MonoBehaviour
 
     void Done()
     {
-        uiManager.SwitchToMenu();
+        playerParent.SetActive(false);
+
+        // free up memory?
+        commands = null;
+        selections = null;
     }
 }

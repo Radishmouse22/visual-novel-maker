@@ -4,23 +4,16 @@ using TMPro;
 
 public class ProjectListing : MonoBehaviour
 {
-    [HideInInspector] public DirectoryInfo dir = null;
-    [HideInInspector] public string errors;
+    // set in inspector
+    public bool newButton = false;
+    [HideInInspector] public DirectoryInfo dir;
 
-    public void Init(DirectoryInfo dir, string errors)
+    public void Init(DirectoryInfo dir)
     {
         this.dir = dir;
-        this.errors = errors;
-        string name = dir.Name;
-
-        if (errors.Length > 0)
-            name += '*';
-        gameObject.GetComponentInChildren<TMP_Text>().text = name;
+        gameObject.GetComponentInChildren<TMP_Text>().text = dir.Name;
     }
 
     // called from button
-    public void Selected()
-    {
-        Singleton.Instance.projectSelector.Selected(this);
-    }
+    public void Selected() => ProjectEditor.Selected(this);
 }
