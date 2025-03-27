@@ -166,6 +166,7 @@ public class VisualNovelPlayer : MonoBehaviour
     void Done()
     {
         playerParent.SetActive(false);
+        box.Shown = false;
 
         // free up memory?
         commands = null;
