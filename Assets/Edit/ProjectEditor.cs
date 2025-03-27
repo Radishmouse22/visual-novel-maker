@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using TMPro;
 using UnityEngine;
@@ -46,6 +47,8 @@ public class ProjectEditor : MonoBehaviour
     public static void Selected(ProjectListing listing)
     {
         Singleton.projectDir = listing.newButton ? Singleton.NewProject() : listing.dir;
+        if (listing.newButton)
+            Singleton.RefreshProjectListing();
         Singleton.RefreshProjectData();
     }
 
@@ -55,6 +58,7 @@ public class ProjectEditor : MonoBehaviour
     public Button playButton;
 
     Novel novel;
+    ParsedProjectSettings settings;
     List<string> errors;
 
     // also also called from the in-scene refresh button
@@ -72,7 +76,8 @@ public class ProjectEditor : MonoBehaviour
         nameplate.text = projectDir.Name;
         novel = new();
         errors = new();
-        Interpreter.InterpretProject(projectDir, novel, errors, false, out _);
+        if (!Interpreter.InterpretProject(projectDir, novel, errors, true, out settings))
+            errors.Add($"project does not contain a \"{Constants.SETTINGS_FILE_NAME}\" file");
         errorPrintout.text = string.Join('\n', errors);
         playButton.interactable = errors.Count == 0;
     }
@@ -85,6 +90,7 @@ public class ProjectEditor : MonoBehaviour
     public void PlayProject()
     {
         NovelTesting.novel = novel;
+        NovelTesting.settings = settings;
         NovelTesting.name = projectDir.Name;
         SceneManager.LoadScene(playerBuildIndex);
     }

@@ -30,10 +30,12 @@ public class DialogueBox : MonoBehaviour
     public TMP_Text speechText, speakerText;
     Action whenDone;
     bool printing = false;
+    bool active = false;
     string target;
 
     public void Print(string speaker, string speech, Action whenDone)
     {
+        active = true;
         printing = false;
         this.whenDone = whenDone;
         speakerText.text = speaker;
@@ -60,6 +62,7 @@ public class DialogueBox : MonoBehaviour
 
     void Update()
     {
+        if (!active) return;
         if (Input.GetKeyDown(KeyCode.Space) && Shown)
             Skip();
     }
@@ -74,5 +77,6 @@ public class DialogueBox : MonoBehaviour
             return;
         }
         whenDone();
+        active = false;
     }
 }

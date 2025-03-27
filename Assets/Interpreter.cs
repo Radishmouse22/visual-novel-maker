@@ -13,7 +13,8 @@ public static class Interpreter
     static InterpretMode mode;
     static List<ICommand> currentScene;
     static bool loadImages = true;
-    static ProjectSettings projectSettings;
+    static FileInfo jpsFile;
+    static ParsedProjectSettings pps;
     static bool containsProjectSettings;
 
     static string e;
@@ -25,19 +26,19 @@ public static class Interpreter
     /// Big daddy function that returns a horrificly awful stupid bad object tree of commands
     /// </summary>
     /// <returns>Whether the project contains a project settings file</returns>
-    public static bool InterpretProject(DirectoryInfo dir, Novel n, List<string> errors, bool loadImages, out ProjectSettings projectSettings)
+    public static bool InterpretProject(DirectoryInfo dir, Novel n, List<string> errors, bool loadImages, out ParsedProjectSettings projectSettings)
     {
         Interpreter.errors = errors;
         Interpreter.n = n;
         Interpreter.sceneFiles = new();
         Interpreter.currentScene = null;
         Interpreter.loadImages = loadImages;
-        Interpreter.projectSettings = null;
-        Interpreter.projectSettings = null;
+        Interpreter.jpsFile = null;
+        Interpreter.pps = null;
         Interpreter.containsProjectSettings = false;
 
         // import images and shelve scene files
-        ImportImages(dir);
+        ImportFiles(dir);
         if (!loadImages)
             Resources.UnloadUnusedAssets();
 
@@ -49,6 +50,10 @@ public static class Interpreter
         mode = InterpretMode.COMMANDS;
         for (int i = 0; i < sceneFiles.Count; i++) InterpretFile(sceneFiles[i]);
 
+        // parse project settings
+        if (jpsFile != null)
+            ParseProjectSettings(jpsFile);
+
         // check for start scene
         if (!n.scenes.ContainsKey(START_SCENE_NAME))
             errors.Add($"project needs to contain a scene named \"{START_SCENE_NAME}\" to start at");
@@ -59,13 +64,15 @@ public static class Interpreter
         Interpreter.sceneFiles = null;
         Interpreter.currentScene = null;
         Interpreter.loadImages = true;
+        Interpreter.jpsFile = null;
         // Interpreter.containsProjectSettings = false;
 
-        projectSettings = Interpreter.projectSettings;
+        projectSettings = Interpreter.pps;
+        Interpreter.pps = null;
         return containsProjectSettings;
     }
     
-    static void ImportImages(DirectoryInfo dir)
+    static void ImportFiles(DirectoryInfo dir)
     {
         // check every file in this directory
         foreach (var file in dir.GetFiles())
@@ -73,18 +80,18 @@ public static class Interpreter
             // if it's a scene file, add it to the list to interpret later
             if (file.Extension == "")
             {
-                if (file.Name == Constants.SETTINGS_FILE_NAME)
+                sceneFiles.Add(file.FullName);
+                continue;
+            }
+            if (file.Extension == ".json" && file.Name == Constants.SETTINGS_FILE_NAME)
+            {
+                if (containsProjectSettings)
                 {
-                    if (containsProjectSettings)
-                    {
-                        RaiseError($"Project contains multiple project settings ({Constants.SETTINGS_FILE_NAME}) files");
-                        continue;
-                    }
-                    ReadProjectSettings(file);
-                    containsProjectSettings = true;
+                    RaiseError($"Project contains multiple project settings ({Constants.SETTINGS_FILE_NAME}) files");
                     continue;
                 }
-                sceneFiles.Add(file.FullName);
+                jpsFile = file;
+                containsProjectSettings = true;
                 continue;
             }
             // if it's an image, let's do it now
@@ -94,7 +101,7 @@ public static class Interpreter
 
         // called recursively to search every subdirectory
         foreach (var subDir in dir.GetDirectories())
-            ImportImages(subDir);
+            ImportFiles(subDir);
     }
     static void ImportImage(FileInfo file)
     {
@@ -541,14 +548,35 @@ public static class Interpreter
         }),
     };
 
-    static void ReadProjectSettings(FileInfo file)
+    static void ParseProjectSettings(FileInfo file)
     {
-        projectSettings = JsonUtility.FromJson<ProjectSettings>(File.ReadAllText(file.FullName));
-        if (projectSettings == null)
+        e = "";
+
+        // Interpret the file into an instance of the ProjectSettings class
+        var jps = JsonUtility.FromJson<JsonProjectSettings>(File.ReadAllText(file.FullName)); // omg I love this utility idk what I'd do without it
+        if (jps == null)
         {
             RaiseError("Error with project settings file - consider deleting");
             return;
         }
+
+        pps = new();
+
+        // Parse all of the fields
+        if (!ColorUtility.TryParseHtmlString(jps.main_color, out Color c))
+            RaiseError($"couldn't parse {nameof(jps.main_color)} in {Constants.SETTINGS_FILE_NAME}");
+        else
+            pps.mainColor = c;
+
+        if (!n.images.ContainsKey(jps.menu_bg_image))
+            RaiseError($"no image named \"{jps.menu_bg_image}\" in project");
+        else
+            pps.menuBGImage = jps.menu_bg_image;
+
+        if (!n.images.ContainsKey(jps.dialogue_bg_image))
+            RaiseError($"no image named \"{jps.dialogue_bg_image}\" in project");
+        else
+            pps.dialogueBGImage = jps.dialogue_bg_image;
     }
 
     static bool ValidImageFile(string ext) => ext == ".png" || ext == ".jpg";

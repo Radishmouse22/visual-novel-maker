@@ -180,3 +180,19 @@ The default is `fade 0.5`
 ### Clear Images
 `clear`
 Clears the screen of all images (except for the background).
+
+# CONFIGURATION
+When created, every project contains a `project_settings.json` file. This is used to configure the novel's UI appearance and settings. The braces, quotes, commas, and colons of JSON are a little scary, but the values inside of the second pair of quotes on every line are all you need to touch.
+
+`main_color` a hexadecimal color code starting with a hashtag `#`.
+`menu_bg_image` the name of the image to use as the background for the main menu.
+`dialogue_bg_image` the name of the image to use as the dialogue box's background. This will change the dialogue box's size to match the image exactly, so a reasonable size and aspect ratio are recommended.
+
+Example:
+```
+{
+    "main_color": "#efa421",
+    "menu_bg_image": "menu background",
+    "dialogue_bg_image": "m"
+}
+```

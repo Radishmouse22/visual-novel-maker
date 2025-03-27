@@ -30,16 +30,21 @@ public class VisualNovelPlayer : MonoBehaviour
     public void Play()
     {
         playerParent.SetActive(true);
+        // setup components
         imageManager.DestroyAll();
         prompter.DestroyAll();
+
+        // reset counters and trackers
         commandIndex = 0;
         commands = n.scenes[Interpreter.START_SCENE_NAME];
         skipNextCommand = false;
         selections = new();
-        NextEvent();
+
+        // trigger first command
+        NextCommand();
     }
 
-    void NextEvent()
+    void NextCommand()
     {
         if (commandIndex >= commands.Count)
         {
@@ -52,7 +57,7 @@ public class VisualNovelPlayer : MonoBehaviour
         if (skipNextCommand)
         {
             skipNextCommand = false;
-            NextEvent();
+            NextCommand();
             return;
         }
 
@@ -76,21 +81,21 @@ public class VisualNovelPlayer : MonoBehaviour
     void Set(Set e)
     {
         n.variables[e.var] = e.value;
-        NextEvent();
+        NextCommand();
     }
     void If(If e)
     {
         skipNextCommand = !n.variables[e.var];
-        NextEvent();
+        NextCommand();
     }
     void IfNot(IfNot e)
     {
         skipNextCommand = n.variables[e.var];
-        NextEvent();
+        NextCommand();
     }
     void Prompt(Prompt e)
     {
-        _Prompt(e.choice, NextEvent);
+        _Prompt(e.choice, NextCommand);
     }
     void _Prompt(string choice, Action after)
     {
@@ -115,12 +120,12 @@ public class VisualNovelPlayer : MonoBehaviour
     void _ChoiceBasedJump(ChoiceBasedJump cbj)
     {
         _Jump(selections[cbj.choice]);
-        NextEvent();
+        NextCommand();
     }
     void Jump(Jump e)
     {
         _Jump(e.jumpTo);
-        NextEvent();
+        NextCommand();
     }
     void _Jump(string to)
     {
@@ -131,31 +136,31 @@ public class VisualNovelPlayer : MonoBehaviour
     IEnumerator WaitCoroutine(Wait e)
     {
         yield return new WaitForSeconds(e.duration);
-        NextEvent();
+        NextCommand();
     }
     void BackgroundChange(BackgroundChange e)
     {
         background.sprite = n.images[e.changeTo];
-        NextEvent();
+        NextCommand();
     }
     void Show(Show e)
     {
         imageManager.Show(e.toShow, e.h, e.v);
-        NextEvent();
+        NextCommand();
     }
     void Hide(Hide e)
     {
         imageManager.Hide(e.groupToHide);
-        NextEvent();
+        NextCommand();
     }
     void Clear(Clear e)
     {
         imageManager.Clear();
-        NextEvent();
+        NextCommand();
     }
     void Dialogue(Speak e)
     {
-        box.Print(e.speaking, e.speach, NextEvent);
+        box.Print(e.speaking, e.speach, NextCommand);
     }
 
     void Done()
