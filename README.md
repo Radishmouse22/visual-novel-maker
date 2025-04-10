@@ -1,16 +1,113 @@
 # Sam's Visual Novel Maker
-A tool for creating and playing visual novel games.
-Currently developed in the Unity game engine with plans to move to a standalone application.
-This readme will become more in-depth and useful as development continues.
+A tool for creating and playing visual novel games badly developed in the Unity game engine.
 
-# Notes
-Assumes that all folders in the root `StreamingAssets` folder are project folders.
+# Create a Project
+Open SVNM. Click `new` at the top of the list of projects. Your project will, by default, be named `new project <n>`. You can change this by renaming the folder on your system and refreshing.
+
+>Project folders are located in `StreamingAssets` in the data folder of SVNM.
+
+Inside will be a `project_settings.json`, where you can customize your project, and a `start` scene file.
+
+# CONFIGURATION
+When created, every project contains a `project_settings.json` file. This is used to configure the novel's background and UI images. JSON can be daunting, but you just need to edit within the second pair of quotes.
+
+>A `project_settings.json` file is required for a playable project.
+
+### Properties
+
+`main_color` a hexadecimal color code starting with a hashtag `#`.
+
+`menu_bg_image` the name of the image to use as the background for the main menu.
+
+`dialogue_bg_image` the name of the image to use as the dialogue box's background. This will change the dialogue box's size to match the image exactly, so a reasonable size and aspect ratio are recommended.
+
+Example:
+```
+{
+    "main_color": "#efa421",
+    "menu_bg_image": "menu background",
+    "dialogue_bg_image": "dialogue box"
+}
+```
 
 # LANGUAGE
-Commands make things happen in the visual novel. A command makes up a line of code. Only one command is allowed per line.
+SVNM uses a custom `domain specific language` that is explicitely designed for use within SVNM. Called `scene files`, scripts written for SVNM are interpreted, meaning that there is no compilation step and they are ran on-the-fly.
 
-### Case
-All language keywords are lowercase because I care about your pinky and holding `shift` sucks. For this reason, it is convention for all object, scene, and image names to also be lowercase. This also helps you be able to tell the difference between speach (`sam Hey! That's mine!`) and commands (`jump confrontation`).
+>Scene files use no file extension.
+
+**There are NO RUNTIME ERRORS OR EXCEPTIONS in SVNM.**
+Since scene files do not describe a computer program, but simply the order of events that take place in a story, there is nothing that should cause errors during runtime that can't be detected during interpretation.
+
+Whenever you refresh your project, the entire project is interpreted and checked for errors.
+
+>No errors, in syntax or otherwise, can be present before a project can be played or tested.
+
+### Syntax
+
+Instructions are written as commands. Commands follows this forumla:
+
+`keyword <1st arg> <2nd arg> ... <optional final multi-word arg*>`
+
+>Multi-word args are indicated with an asterisk `*`
+
+However, dialogue commands are unique, following this formula: `[character shorthand] <dialogue*>`. This allows for dialogue to be added with very minimal work.
+
+<table>
+<tr><td> Your Character Dialogue Script </td><td> SVNM Code </td></tr>
+<tr>
+<td>
+
+```
+Ben: Hey! That's mine!
+Sam: Ain't no way I'm giving this back hehe
+Ben: No fair!
+```
+
+</td>
+<td>
+
+```
+char Ben: Ben
+char Sam: Sam
+
+scene Takeaway
+    Mc: Hey! That's mine!
+    Sam: Ain't no way I'm giving this back hehe
+    Mc: No fair!
+```
+
+</td>
+</tr>
+<tr>
+<td>
+
+```
+"I love hotdogs!" says Sam.
+Ben replies "Hotdogs are stupid".
+"Meanie..." Sam whispers.
+```
+
+</td>
+<td>
+
+```
+char s Sam
+char b Ben
+
+scene Hotdog
+    s I love hotdogs!
+    b Hotdogs are stupid
+    s Meanie...
+```
+
+</td>
+</tr>
+</table>
+With literally three additional lines of (essentially boilerplate) code, the scripts were turned into playable scenes.
+
+### Case and Naming
+All language keywords are required to be lowercase (because I care about your shift-holding pinking).
+Because of this, you should use PascalCase for variable, scene, and choice names to differentiate
 
 ### Indentation
 Indentation is completely optional. Tabs (yay) or spaces (ew) are fine.
@@ -25,9 +122,6 @@ scene tutorial
     if playedBefore
         jump beginning
 ```
-
-### Naming
-Since most command arguments are one word long (An asterisk `*` indicates otherwise) you should use `camelCase` (yay) or `snake_case` (ew) to fit multiple words and maintain readability.
 
 ### Special Characters
 Only these standard English characters are conventional: `A-Z` `a-z` `,.:;'"/()!@#$%^&*-=_+~`
@@ -166,35 +260,17 @@ vertical options: `top`, `topcenter`, `center`, `bottomcenter`, `bottom`
 
 The default image position is `center bottomcenter`
 
-### Image Hide/Show Transition
->should be written right after a `show` or `hide` command
+### ~~Image Hide/Show Transition~~ (Not implemented)
+>~~should be written right after a `show` or `hide` command~~
 
-`with <mode> <duration> # in seconds`
+~~`with <mode> <duration> # in seconds`~~
 
-Defines a transitions that an image should be shown or hidden with.
+~~Defines a transitions that an image should be shown or hidden with.~~
 
-The modes are: `none`, `fade`
+~~The modes are: `none`, `fade`~~
 
-The default is `fade 0.5`
+~~The default is `fade 0.5`~~
 
 ### Clear Images
 `clear`
 Clears the screen of all images (except for the background).
-
-# CONFIGURATION
-When created, every project contains a `project_settings.json` file. This is used to configure the novel's UI appearance and settings. The braces, quotes, commas, and colons of JSON are a little scary, but the values inside of the second pair of quotes on every line are all you need to touch.
-
-`main_color` a hexadecimal color code starting with a hashtag `#`.
-
-`menu_bg_image` the name of the image to use as the background for the main menu.
-
-`dialogue_bg_image` the name of the image to use as the dialogue box's background. This will change the dialogue box's size to match the image exactly, so a reasonable size and aspect ratio are recommended.
-
-Example:
-```
-{
-    "main_color": "#efa421",
-    "menu_bg_image": "menu background",
-    "dialogue_bg_image": "m"
-}
-```
